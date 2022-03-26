@@ -47,7 +47,7 @@ export default function Home({ taskState }) {
       <Head>
         <title>Tasks</title>
       </Head>
-      <div className='p-5 h-auto w-11/12 md:w-[400px] min-w-[400px] shadow-md rounded-md border-2 border-gray-400 flex flex-col items-center justify-start mt-[20vh]'>
+      <div className='p-5 h-auto w-11/12 md:w-[400px]  shadow-md rounded-md border-2 border-gray-400 flex flex-col items-center justify-start mt-[20vh]'>
         <div className='flex justify-between items-center mb-7 w-full'>
           <h1 className='font-bold text-gray-700 text-2xl'>Your tasks</h1>
           <button
@@ -131,6 +131,7 @@ export default function Home({ taskState }) {
 }
 
 export async function getServerSideProps() {
+  // handle error case
   const { Items: taskState } = await getTasks();
   return {
     props: {
