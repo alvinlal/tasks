@@ -14,7 +14,11 @@ export default function Home({ taskState }) {
     msg: '',
     empty: true,
   });
-  const { send, isLoading } = useSend();
+  const [sendAddTask, isAdding] = useSend();
+  const [sendDeleteTask, isDeleting, deleteError] = useSend();
+  const [sendUpdateTask, isUpdating, updateError] = useSend();
+  const pendingTasks = tasks.filter((task) => !task.completed);
+  const completedTasks = tasks.filter((task) => task.completed);
 
   const addTask = async () => {
     if (title.length == 0) {
@@ -26,7 +30,7 @@ export default function Home({ taskState }) {
       setTimeout(() => setStatusMsg({ type: 'none', msg: '', empty: true }), 3000);
       return;
     }
-    const { data } = await send(`/api/tasks/addTask`, {
+    const { data } = await sendAddTask('/api/tasks/addTask', {
       method: 'POST',
       body: JSON.stringify({ title, completed: false }),
     });
@@ -41,13 +45,39 @@ export default function Home({ taskState }) {
       setTitle('');
     }
   };
-  console.log(isLoading);
+
+  const deleteTask = async (task) => {
+    const id = task.id;
+    setTasks([...tasks.filter((task) => task.id != id)]);
+    await sendDeleteTask('/api/tasks/deleteTask', {
+      method: 'POST',
+      body: JSON.stringify({ id }),
+    });
+    if (deleteError) {
+      setTasks([task, ...tasks]);
+    }
+  };
+
+  const updateTask = async (task) => {
+    const id = task.id;
+    setTasks(tasks.map((task) => (task.id == id ? { ...task, completed: !task.completed } : task)));
+    await sendUpdateTask('/api/tasks/updateTask', {
+      method: 'POST',
+      body: JSON.stringify({ id, completed: !task.completed }),
+    });
+    if (updateError) {
+      setTasks(
+        tasks.map((task) => (task.id == id ? { ...task, completed: !task.completed } : task))
+      );
+    }
+  };
+
   return (
     <Layout>
       <Head>
         <title>Tasks</title>
       </Head>
-      <div className='p-5 h-auto w-11/12 md:w-[400px]  shadow-md rounded-md border-2 border-gray-400 flex flex-col items-center justify-start mt-[20vh]'>
+      <div className='p-5 h-auto w-11/12 md:w-[450px]  shadow-md rounded-md border-2 border-gray-400 flex flex-col items-center justify-start mt-[20vh]'>
         <div className='flex justify-between items-center mb-7 w-full'>
           <h1 className='font-bold text-gray-700 text-2xl'>Your tasks</h1>
           <button
@@ -64,7 +94,7 @@ export default function Home({ taskState }) {
         {isFormVisible && (
           <>
             <textarea
-              disabled={isLoading}
+              disabled={isAdding}
               onChange={(e) => setTitle(e.target.value)}
               value={title}
               className='w-full border-2 border-gray-400 rounded-md p-3 font-bold mb-4 shadow-md'
@@ -79,11 +109,11 @@ export default function Home({ taskState }) {
               </p>
               <button
                 onClick={addTask}
-                disabled={isLoading}
+                disabled={isAdding}
                 className='bg-green-500 h-[50px] font-bold text-white rounded-md shadow-md hover:scale-105 mb-4 text-base disabled:cursor-not-allowed w-[100px] flex items-center justify-center hover:shadow-lg'
               >
                 <span className='text-lg'>ADD</span>
-                {isLoading ? (
+                {isAdding ? (
                   <span className='text-4xl ml-3 '>
                     <Spinner />
                   </span>
@@ -97,32 +127,59 @@ export default function Home({ taskState }) {
         <h1 className='font-bold text-gray-700 text-xl self-start my-4'>Pending</h1>
 
         <ul className='self-start w-full '>
-          {tasks.map(
-            (task) =>
-              !task.completed && (
-                <li
-                  key={task.id}
-                  className='border-2 border-gray-400 py-2 pl-4 font-bold rounded-md shadow-md mb-4'
+          {pendingTasks.length === 0 ? (
+            <p>No Pending tasks 🥳</p>
+          ) : (
+            pendingTasks.map((task) => (
+              <li
+                key={task.id}
+                className='border-2 border-gray-400 py-2 px-4 font-bold rounded-md shadow-md mb-4 flex items-center justify-between '
+              >
+                <p className='w-4/5 '>{task.title}</p>
+                <button
+                  className='rounded-full bg-red-500   w-6 h-6 flex items-start justify-center hover:scale-105 '
+                  onClick={() => deleteTask(task)}
                 >
-                  {task.title}
-                </li>
-              )
+                  <span className=' text-white font-extrabold '>{<>&#xd7;</>}</span>
+                </button>
+                <button
+                  className='rounded-full bg-green-500 ml-3  w-6 h-6 flex items-start justify-center hover:scale-105 '
+                  onClick={() => {
+                    updateTask(task);
+                  }}
+                >
+                  <span className=' text-white font-extrabold '>{<>&#10003;</>}</span>
+                </button>
+              </li>
+            ))
           )}
         </ul>
         <h1 className='font-bold text-gray-700 text-xl self-start my-4'>Completed</h1>
         <ul className='self-start w-full '>
-          {tasks.map(
-            (task) =>
-              task.completed && (
-                <li
-                  key={task.id}
-                  className='border-2 border-gray-400 py-2 pl-4 font-bold rounded-md shadow-md mb-4 text-gray-500'
-                >
+          {completedTasks.length === 0 ? (
+            <p>No completed tasks</p>
+          ) : (
+            completedTasks.map((task) => (
+              <li
+                key={task.id}
+                className='border-2 border-gray-400 py-2 px-4 font-bold rounded-md shadow-md mb-4 flex items-center justify-between '
+              >
+                <p className='w-4/5 text-gray-500 '>
+                  {' '}
                   <strike className='decoration-2'>
                     <i>{task.title}</i>
                   </strike>
-                </li>
-              )
+                </p>
+                <button
+                  className='rounded-full bg-red-500   w-6 h-6 flex items-start justify-center hover:scale-105 '
+                  onClick={() => {
+                    deleteTask(task);
+                  }}
+                >
+                  <span className=' text-white font-extrabold '>{<>&#xd7;</>}</span>
+                </button>
+              </li>
+            ))
           )}
         </ul>
       </div>

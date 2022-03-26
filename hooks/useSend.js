@@ -33,7 +33,7 @@ const useSend = () => {
     }
   };
 
-  return { send, isLoading, error };
+  return [send, isLoading, error];
 };
 
 export default useSend;

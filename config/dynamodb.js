@@ -1,5 +1,11 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  PutCommand,
+  DeleteCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
 const dbClient = DynamoDBDocumentClient.from(
@@ -39,8 +45,46 @@ const addTask = async (task) => {
     return { data: { id }, errors: {} };
   } catch (error) {
     console.error(error);
-    return { data: null, error: {} };
+    return { data: null, errors: {} };
   }
 };
 
-export { dbClient, getTasks, addTask };
+const deleteTask = async (id) => {
+  try {
+    const params = {
+      TableName: 'Tasks',
+      Key: {
+        id,
+      },
+      ReturnValues: 'ALL_OLD',
+    };
+    const data = await dbClient.send(new DeleteCommand(params));
+    return { data: { id: data.Attributes.id }, errors: {} };
+  } catch (error) {
+    console.error(error);
+    return { data: null, errors: {} };
+  }
+};
+
+const updateTask = async (task) => {
+  try {
+    const params = {
+      TableName: 'Tasks',
+      Key: {
+        id: task.id,
+      },
+      UpdateExpression: 'SET completed = :newcompleted',
+      ExpressionAttributeValues: {
+        ':newcompleted': task.completed,
+      },
+      ReturnValues: 'ALL_NEW',
+    };
+    const data = await dbClient.send(new UpdateCommand(params));
+    return { data: { task: data.Attributes }, errors: {} };
+  } catch (error) {
+    console.error(error);
+    return { data: null, errors: {} };
+  }
+};
+
+export { dbClient, getTasks, addTask, deleteTask, updateTask };
