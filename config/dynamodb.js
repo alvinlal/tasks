@@ -2,7 +2,15 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
-const dbClient = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+const dbClient = DynamoDBDocumentClient.from(
+  new DynamoDBClient({
+    region: process.env.TASKS_AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.TASKS_AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.TASKS_AWS_SECRET_ACCESS_KEY,
+    },
+  })
+);
 
 const getTasks = async () => {
   try {
@@ -17,7 +25,7 @@ const getTasks = async () => {
   }
 };
 
-const addTask = async task => {
+const addTask = async (task) => {
   try {
     const id = uuidv4();
     const params = {
