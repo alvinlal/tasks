@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import Head from 'next/head';
-import Layout from '../components/Layout';
 import { getTasks } from '../config/dynamodb';
 import useSend from '../hooks/useSend';
 import Spinner from '../components/Spinner';
@@ -73,11 +72,11 @@ export default function Home({ taskState }) {
   };
 
   return (
-    <Layout>
+    <>
       <Head>
-        <title>Tasks</title>
+        <title>Your Tasks</title>
       </Head>
-      <div className='p-5 h-auto w-11/12 md:w-[450px]  shadow-md rounded-md border-2 border-gray-400 flex flex-col items-center justify-start mt-[20vh]'>
+      <div className='p-5 h-auto w-11/12 md:w-[450px]  shadow-md rounded-md m-auto border-2 border-gray-400 flex flex-col items-center justify-start mt-[100px] mb-20'>
         <div className='flex justify-between items-center mb-7 w-full'>
           <h1 className='font-bold text-gray-700 text-2xl'>Your tasks</h1>
           <button
@@ -183,16 +182,22 @@ export default function Home({ taskState }) {
           )}
         </ul>
       </div>
-    </Layout>
+    </>
   );
 }
 
 export async function getServerSideProps() {
-  // handle error case
-  const { Items: taskState } = await getTasks();
+  const data = await getTasks();
+  if (!data) {
+    return {
+      props: {
+        error: true,
+      },
+    };
+  }
   return {
     props: {
-      taskState,
+      taskState: data.Items,
     },
   };
 }
