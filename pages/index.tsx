@@ -4,8 +4,14 @@ import Layout from '../components/Layout';
 import { getTasks } from '../config/dynamodb';
 import useSend from '../hooks/useSend';
 import Spinner from '../components/Spinner';
+import { GetServerSideProps } from 'next';
+import Task from '../interfaces/Task.interface';
 
-export default function Home({ taskState }) {
+interface Props {
+  taskState: Task[];
+}
+
+const Home: React.FC<Props> = ({ taskState }) => {
   const [tasks, setTasks] = useState(taskState);
   const [title, setTitle] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -46,7 +52,7 @@ export default function Home({ taskState }) {
     }
   };
 
-  const deleteTask = async (task) => {
+  const deleteTask = async (task: Task) => {
     const id = task.id;
     setTasks([...tasks.filter((task) => task.id != id)]);
     await sendDeleteTask('/api/tasks/deleteTask', {
@@ -58,7 +64,7 @@ export default function Home({ taskState }) {
     }
   };
 
-  const updateTask = async (task) => {
+  const updateTask = async (task: Task) => {
     const id = task.id;
     setTasks(tasks.map((task) => (task.id == id ? { ...task, completed: !task.completed } : task)));
     await sendUpdateTask('/api/tasks/updateTask', {
@@ -185,14 +191,16 @@ export default function Home({ taskState }) {
       </div>
     </Layout>
   );
-}
+};
 
-export async function getServerSideProps() {
+export default Home;
+
+export const getServerSideProps: GetServerSideProps = async () => {
   // handle error case
-  const { Items: taskState } = await getTasks();
+  const { Items: taskState } = (await getTasks()) as any;
   return {
     props: {
       taskState,
     },
   };
-}
+};

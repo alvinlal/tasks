@@ -7,13 +7,14 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
+import Task from '../interfaces/Task.interface';
 
 const dbClient = DynamoDBDocumentClient.from(
   new DynamoDBClient({
     region: process.env.TASKS_AWS_REGION,
     credentials: {
-      accessKeyId: process.env.TASKS_AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.TASKS_AWS_SECRET_ACCESS_KEY,
+      accessKeyId: process.env.TASKS_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.TASKS_AWS_SECRET_ACCESS_KEY!,
     },
   })
 );
@@ -31,7 +32,7 @@ const getTasks = async () => {
   }
 };
 
-const addTask = async (task) => {
+const addTask = async (task: Task) => {
   try {
     const id = uuidv4();
     const params = {
@@ -49,7 +50,7 @@ const addTask = async (task) => {
   }
 };
 
-const deleteTask = async (id) => {
+const deleteTask = async (id: string) => {
   try {
     const params = {
       TableName: 'Tasks',
@@ -59,14 +60,14 @@ const deleteTask = async (id) => {
       ReturnValues: 'ALL_OLD',
     };
     const data = await dbClient.send(new DeleteCommand(params));
-    return { data: { id: data.Attributes.id }, errors: {} };
+    return { data: { id: data?.Attributes?.id }, errors: {} };
   } catch (error) {
     console.error(error);
     return { data: null, errors: {} };
   }
 };
 
-const updateTask = async (task) => {
+const updateTask = async (task: Task) => {
   try {
     const params = {
       TableName: 'Tasks',

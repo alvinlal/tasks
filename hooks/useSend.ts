@@ -1,12 +1,18 @@
 import { useState } from 'react';
 
-// sends data to server using a method and body
-const useSend = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(false);
+type SendFn = (url: string, options: RequestInit) => Promise<any>;
 
-  const send = async (url, options) => {
-    const defaultOptions = {
+interface UseSend {
+  (): [SendFn, boolean, boolean | Error];
+}
+
+// sends data to server using a method and body
+const useSend: UseSend = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<boolean | Error>(false);
+
+  const send = async (url: string, options: RequestInit) => {
+    const defaultOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -23,7 +29,7 @@ const useSend = () => {
 
       setIsLoading(false);
       return await res.json();
-    } catch (error) {
+    } catch (error: any) {
       setError(error);
       //show toast
       alert('something went wrong, please try again later');
